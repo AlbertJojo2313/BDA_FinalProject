@@ -1,0 +1,5 @@
+###Files to ignore
+.DS_Store
+.env
+Notes:Resources/
+movie_id.txt
