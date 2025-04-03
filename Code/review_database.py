@@ -19,6 +19,7 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from tqdm import tqdm
 
 # Load API Key from .env file
 load_dotenv()
@@ -71,7 +72,7 @@ def get_reviews_map(movie_ids):
         future_to_movie = {executor.submit(
             fetch_reviews, movie_id): movie_id for movie_id in movie_ids}
 
-        for future in as_completed(future_to_movie):
+        for future in tqdm(as_completed(future_to_movie),total=len(movie_ids),desc="Fetching Reviews"):
             movie_id = future_to_movie[future]
             try:
                 reviews_map[movie_id] = future.result()[1]
