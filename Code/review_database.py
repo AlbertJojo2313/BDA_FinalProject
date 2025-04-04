@@ -15,10 +15,11 @@ API Documentation: https://www.themoviedb.org/documentation/api
 """
 
 import requests
+import time
 import pandas as pd
 import os
 from dotenv import load_dotenv
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 # Load API Key from .env file
@@ -40,45 +41,55 @@ def read_movie_ids(filename='movie_id.txt'):
 # Fetch movie reviews
 
 
-def fetch_reviews(movie_id):
-    movie_review_url = f"https://api.themoviedb.org/3/movie/{movie_id}/reviews"
+def fetch_reviews(movie_id, retries=3, backoff=2):
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}/reviews"
 
-    try:
-        response = requests.get(movie_review_url, headers=HEADERS)
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=5)
 
-        if response.status_code == 200:
-            data = response.json()
-            reviews_list = data.get('results', [])
+            if response.status_code == 200:
+                data = response.json()
+                reviews_list = data.get('results', [])
 
-            # Return reviews or a placeholder if none exist
-            return movie_id, [{"content": review.get("content", "NA")} for review in reviews_list] or [{"content": "NA"}]
+                return movie_id, [
+                    {
+                        "content": review.get("content", "NA"),
+                        "rating": review.get("author_details", {}).get("rating", "NA")
+                    } for review in reviews_list
+                ] or [{"content": "NA", "rating": "NA"}]
+            elif response.status_code == 429:
+                wait_time = backoff * (attempt + 1)
+                print(f"Rate Limited! Warning {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            print(
+                f"Failed to fetch reviews for movie ID {movie_id}. Status: {response.status_code}")
+            return movie_id, [{"content": "NA", "rating": "NA"}]
 
-        print(
-            f"Failed to fetch reviews for movie ID {movie_id}. Status: {response.status_code}")
-        return movie_id, [{"content": "NA"}]
+        except Exception as e:
+            print(
+                f"Error fetching reviews for movie ID {movie_id}(attempt {attempt+1}): {e}")
+            time.sleep(backoff)
+    return movie_id, [{"content": "NA", "rating": "NA"}]
 
-    except Exception as e:
-        print(f"Error fetching reviews for movie ID {movie_id}: {e}")
-        return movie_id, [{"content": "NA"}]
-
-# Parallelized review fetching using multiprocessing
+# Parallelized review fetching
 
 
-def get_reviews_map(movie_ids):
+def get_reviews_map(movie_ids, max_workers=10):
     reviews_map = {}
 
-    # Adjust based on CPU cores
-    with ProcessPoolExecutor(max_workers=10) as executor:
-        future_to_movie = {executor.submit(
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(
             fetch_reviews, movie_id): movie_id for movie_id in movie_ids}
 
-        for future in tqdm(as_completed(future_to_movie),total=len(movie_ids),desc="Fetching Reviews"):
-            movie_id = future_to_movie[future]
+        for future in tqdm(as_completed(futures), total=len(movie_ids), desc="Fetching Reviews"):
+            movie_id = futures[future]
             try:
                 reviews_map[movie_id] = future.result()[1]
             except Exception as e:
-                print(f"Error fetching reviews for movie ID {movie_id}: {e}")
-                reviews_map[movie_id] = [{"content": "NA"}]
+                print(f"Error processing movie ID {movie_id}: {e}")
+                reviews_map[movie_id] = [{"content": "NA", "rating": "NA"}]
 
     return reviews_map
 
@@ -92,7 +103,8 @@ def save_reviews_to_csv(reviews_map, filename='movie_reviews.csv'):
         for review in reviews:
             rows.append({
                 'movie_id': movie_id,
-                'review': review['content']
+                'review': review['content'],
+                'rating': review['rating']
             })
 
     df = pd.DataFrame(rows)
@@ -103,5 +115,9 @@ def save_reviews_to_csv(reviews_map, filename='movie_reviews.csv'):
 # Main Execution
 if __name__ == "__main__":
     movie_ids = read_movie_ids()
-    reviews_map = get_reviews_map(movie_ids)
+    print(f"Found {len(movie_ids)} movie IDs. Fetching reviews...")
+
+    reviews_map = get_reviews_map(movie_ids, max_workers=10)
     save_reviews_to_csv(reviews_map)
+
+    print("All reviews fetched and saved!")
