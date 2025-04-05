@@ -4,5 +4,5 @@
 Notes:Resources/
 movie_id.txt
 analysis.py
-movie_reviews.csv
-movie_reviews_clean.csv
+data/movie_reviews_clean.csv
+data/movie_reviews_encoded.csv
