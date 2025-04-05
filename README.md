@@ -6,47 +6,9 @@ This project aims to **evaluate the efficiency and scalability** of **random pro
 
 ---
 
-## How to Access the Repository
-
-To get started with the repository, follow these instructions:
-
-### 1. **Accessing the Repository**
-   - **Clone the Repository:**
-     You can clone the repository by running the following command 
-     ```bash
-     git clone https://github.com/AlbertJojo2313/BDA_FinalProject.git
-     ```
-
-   - **Access the Repository on GitHub:**
-     You can visit the repository's GitHub page directly in their web browser:
-     [https://github.com/AlbertJojo2313/BDA_FinalProject]
-
-### 2. **Dataset**
-   The dataset used for training the models is located inside the `data` directory. Group members can access and use this data for model training and testing.
-
-
-### 3. **Creating a New Branch for Changes**
-   If you to make changes or test something out, you can follow these steps to create a new branch and avoid affecting the `main` branch:
-
-   - **Create and switch to a new branch:**
-     After cloning the repository, you can navigate to the project directory and create a new branch using:
-     ```bash
-     git checkout -b new-branch-name
-     ```
-
-   - **Make Changes and Commit:**
-    You can then make their changes in this new branch. After making changes, they should add and commit:
-     ```bash
-     git add .
-     git commit -m "Description of the changes"
-     ```
-
-   - **Push the Branch to GitHub:**
-     Once you have committed their changes, they should push the branch to the remote repository:
-     ```bash
-     git push origin new-branch-name
-     ```
-### 4. **Switching Back to the `main` Branch**
-   If you want to return to the `main` branch, you can use the following command:
-   ```bash
-   git checkout main
+## Getting Started
+To get the data to run the models in google colab, follow these steps:
+1. Clone the repository: `git clone https://github.com/AlbertJojo2313/BDA_FinalProject.git`
+2. Navigate to the project directory: `cd Sentiment_Analysis`
+3. Download the dataset and upload it in the Google Colab notebook.
+4. The notebook link: https://colab.research.google.com/drive/1qxhqN6l4srT-egVa3pKpg07gD92sjb_l?usp=sharing.
