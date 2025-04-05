@@ -40,7 +40,6 @@ def read_movie_ids(filename='movie_id.txt'):
 
 # Fetch movie reviews
 
-
 def fetch_reviews(movie_id, retries=3, backoff=2):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}/reviews"
 
@@ -97,8 +96,16 @@ def get_reviews_map(movie_ids, max_workers=10):
 
 
 def save_reviews_to_csv(reviews_map, filename='movie_reviews.csv'):
-    rows = []
+    directory = '../data'
 
+    # Create the data directory if it does not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    file_path = os.join(directory, filename)
+
+    # Collects rows from the review to make a dataframe
+    rows = []
     for movie_id, reviews in reviews_map.items():
         for review in reviews:
             rows.append({
@@ -108,8 +115,8 @@ def save_reviews_to_csv(reviews_map, filename='movie_reviews.csv'):
             })
 
     df = pd.DataFrame(rows)
-    df.to_csv(filename, index=False)
-    print(f"Saved {len(df)} reviews to {filename}")
+    df.to_csv(filepath, index=False)
+    print(f"Saved {len(df)} reviews to {file_path}")
 
 
 # Main Execution
